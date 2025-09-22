@@ -22,8 +22,6 @@ app = FastAPI(
 # Initialize configuration from environment
 llm_base_url = os.getenv("LLM_BASE_URL")
 llm_api_key = os.getenv("LLM_API_KEY")
-print(llm_base_url)
-print(llm_api_key)
 
 # Initialize eval service with configuration
 app.state.eval_service = EvalService(llm_base_url=llm_base_url, llm_api_key=llm_api_key)

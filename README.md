@@ -33,18 +33,32 @@ app/
 
 1. Clone the repository and navigate to the project directory:
 ```bash
-cd eval_microservice
+git clone https://github.com/menloresearch/jan-incub-evals.git
+cd jan-incub-evals
 ```
 
 2. Create and activate a virtual environment:
+
+Generally we recommend using `uv` to manage virtual environments and install packages.
+
 ```bash
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+uv venv --python=3.12 --managed-python
+source .venv/bin/activate
 ```
 
-3. Install dependencies:
+3. Setup pre-commit (optional)
+
 ```bash
-pip install -r requirements.txt
+uv pip install pre-commit
+pre-commit install  # install pre-commit hooks
+
+pre-commit  # manually run pre-commit
+pre-commit run --all-files  # if you forgot to install pre-commit previously
+```
+
+4. Install dependencies:
+```bash
+uv pip install -r requirements.txt
 ```
 
 ### Environment Configuration
