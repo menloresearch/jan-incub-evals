@@ -1,0 +1,46 @@
+{
+  "name": "example run using IT ticket data",
+  "data_source": {
+    "type": "completions",
+    "input_messages": {
+      "type": "template",
+      "template": [
+        {
+          "role": "developer",
+          "content": "Categorize the following IT ticket into Hardware, Software, or Other."
+        },
+        {"role": "user", "content": "{{item.ticket_text}}"}
+      ]
+    },
+    "sampling_params": {
+      "temperature": 1,
+      "max_completions_tokens": 2048,
+      "top_p": 1,
+      "seed": 42
+    },
+    "model": "gpt-4o-mini",
+    "source": {
+      "type": "file_content",
+      "content": [
+        {
+          "item": {
+            "ticket_text": "My monitor won't turn on!",
+            "correct_label": "Hardware"
+          }
+        },
+        {
+          "item": {
+            "ticket_text": "I'm in vim and I can't quit!",
+            "correct_label": "Software"
+          }
+        },
+        {
+          "item": {
+            "ticket_text": "Best restaurants in Cleveland?",
+            "correct_label": "Other"
+          }
+        }
+      ]
+    }
+  }
+}
