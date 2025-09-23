@@ -1,19 +1,20 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Request
-from app.schemas.eval import Eval
-from app.schemas.eval_run import EvalRunConfig
+from app.schemas.eval import EvalConfig, EvalResponse, EvalDeleteResponse
+from app.schemas.eval_run import EvalRunConfig, EvalRunResponse
 
 router = APIRouter()
 
 
-@router.post("/evals", response_model=Eval)
-async def create_eval(eval_data: dict, request: Request):
+@router.post("/evals", response_model=EvalResponse)
+async def create_eval(eval_data: EvalConfig, request: Request):
     """
     Create a new evaluation
     """
-    return request.app.state.eval_service.create_eval(eval_data)
+    eval_obj = request.app.state.eval_service.create_eval(eval_data)
+    return eval_obj.to_response()
 
 
-@router.get("/evals/{eval_id}", response_model=Eval)
+@router.get("/evals/{eval_id}", response_model=EvalResponse)
 async def get_eval(eval_id: str, request: Request):
     """
     Retrieve an evaluation by ID
@@ -21,21 +22,21 @@ async def get_eval(eval_id: str, request: Request):
     eval_obj = request.app.state.eval_service.get_eval(eval_id)
     if not eval_obj:
         raise HTTPException(status_code=404, detail="Eval not found")
-    return eval_obj
+    return eval_obj.to_response()
 
 
-@router.post("/evals/{eval_id}", response_model=Eval)
-async def update_eval(eval_id: str, eval_data: dict, request: Request):
+@router.post("/evals/{eval_id}", response_model=EvalResponse)
+async def update_eval(eval_id: str, eval_data: EvalConfig, request: Request):
     """
     Update an existing evaluation by ID (partial updates supported)
     """
     updated_eval = request.app.state.eval_service.update_eval(eval_id, eval_data)
     if not updated_eval:
         raise HTTPException(status_code=404, detail="Eval not found")
-    return updated_eval
+    return updated_eval.to_response()
 
 
-@router.delete("/evals/{eval_id}")
+@router.delete("/evals/{eval_id}", response_model=EvalDeleteResponse)
 async def delete_eval(eval_id: str, request: Request):
     """
     Delete an evaluation by ID
@@ -43,12 +44,15 @@ async def delete_eval(eval_id: str, request: Request):
     success = request.app.state.eval_service.delete_eval(eval_id)
     if not success:
         raise HTTPException(status_code=404, detail="Eval not found")
-    return {"object": "eval.deleted", "deleted": True, "eval_id": eval_id}
+    return EvalDeleteResponse(deleted=True, eval_id=eval_id)
 
 
-@router.post("/evals/{eval_id}/runs", response_model=EvalRunConfig)
+@router.post("/evals/{eval_id}/runs", response_model=EvalRunResponse)
 async def create_eval_run(
-    eval_id: str, run_data: dict, background_tasks: BackgroundTasks, request: Request
+    eval_id: str,
+    run_data: EvalRunConfig,
+    background_tasks: BackgroundTasks,
+    request: Request,
 ):
     """
     Kicks off a new run for a given evaluation, specifying the data source,
@@ -67,7 +71,7 @@ async def create_eval_run(
     return eval_run
 
 
-@router.get("/evals/{eval_id}/runs/{run_id}", response_model=EvalRunConfig)
+@router.get("/evals/{eval_id}/runs/{run_id}", response_model=EvalRunResponse)
 async def get_eval_run(eval_id: str, run_id: str, request: Request):
     """
     Retrieve an evaluation run by eval_id and run_id
