@@ -1,3 +1,6 @@
+> [!WARNING]
+> This is an experimental service that does not have persistent storage of state or data. All memory is lost upon restart.
+> 
 # Eval Microservice
 
 A FastAPI-based microservice for creating and managing model evaluations. This service provides APIs to create evaluations, configure evaluation runs, and process them using various grading mechanisms.
