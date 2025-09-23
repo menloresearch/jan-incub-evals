@@ -52,13 +52,28 @@ class LogsDataSourceConfig(data_source_config):
 DataSourceConfigUnion = Union[CustomDataSourceConfig, LogsDataSourceConfig]
 
 
-class Eval(BaseModel):
+class EvalConfig(BaseModel):
     """
-    An Eval object with a data source config and testing criteria. An Eval represents a task to be done for your LLM integration. Like:
-        - Improve the quality of my chatbot
-        - See how well my chatbot handles customer support
-        - Check if o4-mini is better at my usecase than gpt-4o
+    Configuration for creating or updating an evaluation.
+    Contains only the fields that can be provided by the user via API.
     """
+
+    data_source_config: DataSourceConfigUnion = Field(
+        discriminator="type",
+        description="Configuration of data sources used in runs of the evaluation.",
+    )
+    metadata: Dict[str, str] = Field(
+        default_factory=dict,
+        description="Set of 16 key-value pairs for additional information",
+    )
+    name: str = Field(description="The name of the evaluation.")
+    testing_criteria: List[
+        Annotated[GraderConfigUnion, Field(discriminator="type")]
+    ] = Field(description="A list of testing criteria.")
+
+
+class EvalResponse(BaseModel):
+    """Pydantic model for API responses containing Eval data."""
 
     created_at: int = Field(
         description="The Unix timestamp (in seconds) for when the eval was created."
@@ -79,3 +94,14 @@ class Eval(BaseModel):
     testing_criteria: List[
         Annotated[GraderConfigUnion, Field(discriminator="type")]
     ] = Field(description="A list of testing criteria.")
+
+
+class EvalDeleteResponse(BaseModel):
+    """Pydantic model for eval deletion API responses."""
+
+    object: Literal["eval.deleted"] = Field(
+        default="eval.deleted",
+        description="Object type, always 'eval.deleted' for deletion responses",
+    )
+    deleted: bool = Field(description="Whether the deletion was successful")
+    eval_id: str = Field(description="The ID of the deleted evaluation")

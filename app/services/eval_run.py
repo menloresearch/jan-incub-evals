@@ -1,5 +1,5 @@
 from typing import Dict, Type, Any
-from ..schemas.eval_run import EvalRunConfig, EvalRunStatus
+from ..schemas.eval_run import EvalRunConfig, EvalRunResponse, EvalRunStatus
 
 
 class EvalRun:
@@ -25,13 +25,20 @@ class EvalRun:
             }
         return self._grader_registry
 
-    def __init__(self, config: EvalRunConfig):
-        """Initialize from EvalRunConfig with mutable data structures."""
-        self.id = config.id
-        self.eval_id = config.eval_id
-        self.created_at = config.created_at
-        self.status = config.status
-        self.report_url = config.report_url
+    def __init__(
+        self,
+        run_id: str,
+        eval_id: str,
+        created_at: int,
+        report_url: str,
+        config: EvalRunConfig,
+    ):
+        """Initialize from EvalRunConfig with auto-generated values."""
+        self.id = run_id
+        self.eval_id = eval_id
+        self.created_at = created_at
+        self.status = EvalRunStatus.QUEUED
+        self.report_url = report_url
         self.metadata = dict(config.metadata)
         self.model = config.model
         self.name = config.name
@@ -73,13 +80,13 @@ class EvalRun:
         grader_class = self.GRADER_REGISTRY[config.type]
         return grader_class(config)
 
-    def to_config(self) -> EvalRunConfig:
-        """Convert back to EvalRunConfig for API responses and storage."""
+    def to_response(self) -> EvalRunResponse:
+        """Convert back to EvalRunResponse for API responses and storage."""
         # Create a copy of data_source and update its content
         data_source_dict = self.data_source.model_dump()
         data_source_dict["source"]["content"] = self.content_items
 
-        return EvalRunConfig(
+        return EvalRunResponse(
             id=self.id,
             eval_id=self.eval_id,
             created_at=self.created_at,
@@ -93,4 +100,5 @@ class EvalRun:
             per_testing_criteria_results=self.per_testing_criteria_results,
             result_counts=self.result_counts,
             data_source=data_source_dict,
+            object="eval.run",
         )

@@ -39,7 +39,43 @@ class ResultCountsSchema(BaseModel):
 
 class EvalRunConfig(BaseModel):
     """
-    A Pydantic schema representing an evaluation run configuration.
+    Configuration for creating an evaluation run.
+    Contains only the fields that can be provided by the user via API.
+    """
+
+    data_source: DataSourceUnion = Field(
+        discriminator="type",
+        description="Information about the run's data source.",
+    )
+    error: Optional[ErrorSchema] = Field(
+        default=None,
+        description="An object representing an error response from the Eval API.",
+    )
+    metadata: Dict[str, str] = Field(
+        default_factory=dict,
+        description="Set of 16 key-value pairs for additional information",
+    )
+    model: Optional[str] = Field(
+        default=None, description="The model that is evaluated, if applicable."
+    )
+    name: Optional[str] = Field(default=None, description="The name of the run.")
+    per_model_usage: Optional[Dict] = Field(
+        default=None,
+        description="Usage statistics per model used in the evaluation run.",
+    )
+    per_testing_criteria_results: Optional[List[TestingCriteriaResultsSchema]] = Field(
+        default=None,
+        description="Results per testing criteria applied during the evaluation run.",
+    )
+    result_counts: Optional[ResultCountsSchema] = Field(
+        default=None,
+        description="Counters summarizing the outcomes of the evaluation run.",
+    )
+
+
+class EvalRunResponse(BaseModel):
+    """
+    Pydantic model for API responses containing EvalRun data.
     Used for validation, serialization, and API contracts.
     """
 

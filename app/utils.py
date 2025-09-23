@@ -21,8 +21,8 @@ def substitute_template_variables(
     if not isinstance(text, str):
         return text
 
-    # Pattern to match {{item.field_name}} and {{sample.field_name}}
-    pattern = r"\{\{(item|sample)\.([^}]+)\}\}"
+    # Pattern to match {{item.field_name}} and {{sample.field_name}} with optional whitespace
+    pattern = r"\{\{\s*(item|sample)\.([^}]+?)\s*\}\}"
 
     def replace_variable(match):
         namespace = match.group(1)

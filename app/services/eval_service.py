@@ -1,8 +1,9 @@
 from typing import Dict, Optional
 from datetime import datetime
 import uuid
-from app.schemas.eval import Eval
-from app.schemas.eval_run import EvalRunConfig, EvalRunStatus
+from app.schemas.eval import EvalConfig
+from app.schemas.eval_run import EvalRunConfig, EvalRunResponse, EvalRunStatus
+from .eval import Eval
 from .eval_run import EvalRun
 from .eval_processor import EvalProcessor
 
@@ -15,28 +16,25 @@ class EvalService:
         self.llm_api_key = llm_api_key
         self.processor = EvalProcessor(self)
 
-    def create_eval(self, eval_config: dict) -> Eval:
+    def create_eval(self, eval_config: EvalConfig) -> Eval:
         eval_id = f"eval_{uuid.uuid4().hex}"
         created_at = int(datetime.now().timestamp())
 
-        eval_config.update({"id": eval_id, "created_at": created_at, "object": "eval"})
-
-        eval_obj = Eval(**eval_config)
+        eval_obj = Eval(eval_id, created_at, eval_config)
         self._evals_storage[eval_id] = eval_obj
         return eval_obj
 
     def get_eval(self, eval_id: str) -> Optional[Eval]:
         return self._evals_storage.get(eval_id)
 
-    def update_eval(self, eval_id: str, eval_config: dict) -> Optional[Eval]:
+    def update_eval(self, eval_id: str, eval_config: EvalConfig) -> Optional[Eval]:
         if eval_id not in self._evals_storage:
             return None
 
         existing_eval = self._evals_storage[eval_id]
-        existing_data = existing_eval.model_dump()
-        existing_data.update(eval_config)
 
-        updated_eval = Eval(**existing_data)
+        # Create updated eval with same id and created_at, but new config
+        updated_eval = Eval(existing_eval.id, existing_eval.created_at, eval_config)
         self._evals_storage[eval_id] = updated_eval
         return updated_eval
 
@@ -50,39 +48,25 @@ class EvalService:
     def eval_exists(self, eval_id: str) -> bool:
         return eval_id in self._evals_storage
 
-    def create_eval_run(self, eval_id: str, run_data: dict) -> EvalRunConfig:
+    def create_eval_run(self, eval_id: str, run_data: EvalRunConfig) -> EvalRunResponse:
         run_id = f"evalrun_{uuid.uuid4().hex}"
         created_at = int(datetime.now().timestamp())
         report_url = f"https://server.jan.ai/evaluations/{eval_id}&run_id={run_id}"
 
-        run_data.update(
-            {
-                "id": run_id,
-                "eval_id": eval_id,
-                "created_at": created_at,
-                "status": EvalRunStatus.QUEUED,
-                "report_url": report_url,
-                "object": "eval.run",
-            }
-        )
-
-        # Create EvalRunConfig for validation and API response
-        eval_run_config = EvalRunConfig(**run_data)
-
         # Create plain EvalRun for runtime processing
-        eval_run = EvalRun(eval_run_config)
+        eval_run = EvalRun(run_id, eval_id, created_at, report_url, run_data)
         self._runs_storage[run_id] = eval_run
 
-        return eval_run_config
+        return eval_run.to_response()
 
     def get_eval_run(self, run_id: str) -> Optional[EvalRun]:
         """Get the runtime EvalRun object for processing."""
         return self._runs_storage.get(run_id)
 
-    def get_eval_run_config(self, run_id: str) -> Optional[EvalRunConfig]:
-        """Get the EvalRunConfig for API responses."""
+    def get_eval_run_config(self, run_id: str) -> Optional[EvalRunResponse]:
+        """Get the EvalRunResponse for API responses."""
         eval_run = self._runs_storage.get(run_id)
-        return eval_run.to_config() if eval_run else None
+        return eval_run.to_response() if eval_run else None
 
     def get_eval_run_by_eval_and_run_id(
         self, eval_id: str, run_id: str
@@ -108,12 +92,12 @@ class EvalService:
 
     def get_eval_run_config_by_eval_and_run_id(
         self, eval_id: str, run_id: str
-    ) -> Optional[EvalRunConfig]:
+    ) -> Optional[EvalRunResponse]:
         """
         Retrieve an eval run config by both eval_id and run_id for API responses.
         """
         eval_run = self.get_eval_run_by_eval_and_run_id(eval_id, run_id)
-        return eval_run.to_config() if eval_run else None
+        return eval_run.to_response() if eval_run else None
 
     def update_run_status(
         self, run_id: str, status: EvalRunStatus

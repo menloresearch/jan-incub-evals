@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 from typing import List, Tuple
-from app.schemas.eval import Eval
+from .eval import Eval
 from app.schemas.eval_run import EvalRunStatus
 from .eval_run import EvalRun
 from app.schemas.datasets import CompletionsRunDataSource, ResultContentItemSchema

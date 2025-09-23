@@ -73,6 +73,10 @@ class StringCheckGrader(Grader):
             else None,
         )
 
+        # Strip whitespace to handle whitespace issues
+        input_text = input_text.strip() if input_text else ""
+        reference_text = reference_text.strip() if reference_text else ""
+
         # Perform the comparison based on operation
         passed = self._perform_comparison(input_text, reference_text, self.operation)
         score = 1 if passed else 0
